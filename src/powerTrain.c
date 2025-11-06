@@ -1,0 +1,104 @@
+#include "powerTrain.h"
+#include "geometry2D.h"
+#include <math.h>
+void writeLeftMotor(float throtter) //acceleratie (-1,1)
+{}
+
+void writeRightMotor(float throtter) //acceleratie (-1,1)
+{}
+
+static float RearWheelTurnRadius(float wheelBase, float turnAngle) {
+	float angle;
+	//float temp_sin = sinf(turnAngle);
+	if (floatCmp(turnAngle, 0.0f) == 0) {
+		return -1.0f;
+	}
+	float temp_sin = tanf(turnAngle);
+	if (floatCmp(temp_sin, 0.0f) == 0) {
+		return 0.0f;
+	}
+
+	//angle = (wheelBase / tanf(turnAngle));
+	angle = (wheelBase / temp_sin);
+
+	angle = fabsf(angle);
+	return angle;
+}
+
+float steeringAngle2TurnRadius(float wheelbase_meters, float steeringAngle_rad)
+{
+    float temp_float = sinf(steeringAngle_rad);
+    if (floatCmp(temp_float, 0.0f)==0) {
+        return 0.0f;
+    }
+    float result = wheelbase_meters/temp_float;
+    result = fabsf(result);
+    return result;
+}
+
+
+
+// left_right_turn: negative if turning left, positive if turning right
+// speed_ms is used as throttle and has a range [-1;1]
+	void SetSpeedRequest(float speed_ms, float turn_radius, int left_right_turn){
+		float left_wheel_turn_radius;
+		float right_wheel_turn_radius;
+		float left_wheel_turn_circonference;
+		float right_wheel_turn_circonference;
+		float car_trun_circonference;
+		float left_wheel_speed_request_m;
+		float right_wheel_speed_request_m;
+
+		turn_radius = fabs(turn_radius);
+
+		if (floatCmp(turn_radius, 0.0) == 0 || left_right_turn == 0)	// going straight
+		{
+			left_wheel_speed_request_m = speed_ms;
+			right_wheel_speed_request_m = speed_ms;
+		}
+		else{
+			if (left_right_turn < 0)	// left turn
+			{
+				left_wheel_turn_radius = turn_radius - (TRACKWIDTH_M / 2.0);
+				right_wheel_turn_radius = turn_radius + (TRACKWIDTH_M / 2.0);
+			}
+			else if (left_right_turn > 0)	// right turn
+			{
+				left_wheel_turn_radius = turn_radius + (TRACKWIDTH_M / 2.0);
+				right_wheel_turn_radius = turn_radius - (TRACKWIDTH_M / 2.0);
+			}
+
+			left_wheel_turn_circonference = (2.0 * left_wheel_turn_radius) * M_PI;
+			right_wheel_turn_circonference = (2.0 * right_wheel_turn_radius) * M_PI;
+			car_trun_circonference = (2.0 * turn_radius) * M_PI;
+			
+			left_wheel_speed_request_m =(left_wheel_turn_circonference / car_trun_circonference) * speed_ms;
+			right_wheel_speed_request_m =(right_wheel_turn_circonference / car_trun_circonference) * speed_ms;
+		}
+		
+		writeLeftMotor(left_wheel_speed_request_m);
+		writeRightMotor(right_wheel_speed_request_m);
+	}
+
+
+// steering_angle_rad: negative if turning left, positive if turning right
+float write_powertrain(float throttle, float steering_angle_rad){
+    float turn_radius;
+    float turn_radius_RL;
+    float turn_radius_RR;
+    int left_right_turn;
+
+    left_right_turn = 0;
+    if (steering_angle_rad < 0.0f)
+    {
+        left_right_turn = -1;
+    }
+    else if(steering_angle_rad > 0.0f)
+    {
+        left_right_turn = 1;
+    }
+    
+
+    turn_radius = steeringAngle2TurnRadius(WHEELBASE_M, steering_angle_rad);
+    SetSpeedRequest(throttle, turn_radius, left_right_turn);
+}
