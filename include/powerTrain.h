@@ -5,8 +5,8 @@
 extern "C" {
 #endif
 
-#define WHEELBASE_M 0.02
-#define TRACKWIDTH_M 0.10
+#define WHEELBASE_M 0.115
+#define TRACKWIDTH_M 0.225
 float write_powertrain(float throttle, float steering_angle_rad);
 
 

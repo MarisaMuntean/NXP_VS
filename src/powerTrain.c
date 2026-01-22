@@ -1,11 +1,80 @@
 #include "powerTrain.h"
 #include "geometry2D.h"
 #include <math.h>
+
+
+#define LEFT_BACK_PIN 3
+#define LEFT_FRONT_PIN 5
+
+#define RIGHT_BACK_PIN 6
+#define RIGHT_FRONT_PIN 9
+
+float debug_left_motor = 0;
+float debug_right_motor = 0;
+
+
 void writeLeftMotor(float throtter) //acceleratie (-1,1)
-{}
+{
+	// clamp [-1,1]
+    if (throtter > 1.0f) throtter = 1.0f;
+    if (throtter < -1.0f) throtter = -1.0f;
+
+
+    int pwm = (int)(fabs(throtter) * 255.0f);
+
+   // if (pwm > 0 && pwm < 40) pwm = 40;
+
+    if (throtter > 0)
+    {
+        // Mergi înainte cu motorul stânga:
+
+        analogWrite(LEFT_FRONT_PIN, 0);
+        analogWrite(LEFT_BACK_PIN, pwm);
+    }
+    else if (throtter < 0)
+    {
+        // Mergi înapoi:
+        analogWrite(LEFT_FRONT_PIN, pwm);
+        analogWrite(LEFT_BACK_PIN, 0);
+    }
+    else
+    {
+        // STOP
+        analogWrite(LEFT_FRONT_PIN, 0);
+        analogWrite(LEFT_BACK_PIN, 0);
+    }
+}
 
 void writeRightMotor(float throtter) //acceleratie (-1,1)
-{}
+{
+	if (throtter > 1.0f) throtter = 1.0f;
+    if (throtter < -1.0f) throtter = -1.0f;
+
+    int pwm = (int)(fabs(throtter) * 255.0f);
+
+   // if (pwm > 0 && pwm < 40) pwm = 40;
+
+
+    if (throtter > 0)
+    {
+        // înainte
+        analogWrite(RIGHT_FRONT_PIN, pwm);
+        analogWrite(RIGHT_BACK_PIN, 0);
+    }
+    else if (throtter < 0)
+    {
+        // înapoi
+        analogWrite(RIGHT_FRONT_PIN, 0);
+        analogWrite(RIGHT_BACK_PIN, pwm);
+    }
+    else
+    {
+        // STOP
+        analogWrite(RIGHT_FRONT_PIN, 0);
+        analogWrite(RIGHT_BACK_PIN, 0);
+    }
+
+}
 
 static float RearWheelTurnRadius(float wheelBase, float turnAngle) {
 	float angle;
@@ -76,6 +145,16 @@ float steeringAngle2TurnRadius(float wheelbase_meters, float steeringAngle_rad)
 			right_wheel_speed_request_m =(right_wheel_turn_circonference / car_trun_circonference) * speed_ms;
 		}
 		
+        // înainte de writeLeftMotor / writeRightMotor:
+        float minVel = 0.15f; // 15% din viteza maximă
+
+        if (fabs(left_wheel_speed_request_m) < minVel && left_wheel_speed_request_m != 0.0f)
+            left_wheel_speed_request_m = (left_wheel_speed_request_m > 0 ? minVel : -minVel);
+
+        if (fabs(right_wheel_speed_request_m) < minVel && right_wheel_speed_request_m != 0.0f)
+            right_wheel_speed_request_m = (right_wheel_speed_request_m > 0 ? minVel : -minVel);
+
+
 		writeLeftMotor(left_wheel_speed_request_m);
 		writeRightMotor(right_wheel_speed_request_m);
 	}

@@ -16,7 +16,8 @@
 
 #include <math.h>
 #include <float.h>
-#include <memory.h>
+//#include <memory.h>
+#include <string.h>
 
 #include "geometry2D.h"
 
